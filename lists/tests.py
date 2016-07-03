@@ -8,40 +8,29 @@ from lists.views import home_page
 
 class HomePageTest(TestCase):
 
-    def test_root_url_resolves_to_home_page_view(self):
-        found = resolve('/')
-        self.assertEqual(found.func, home_page)
-
-    def test_home_page_returns_correct_html(self):
+    def test_home_page_is_about_todo_lists(self):
         request = HttpRequest()
         response = home_page(request)
         expected_html = render_to_string('home.html')
         self.assertEqual(response.content.decode(), expected_html)
 
-    def test_home_page_can_save_a_POST_request(self):
-        request = HttpRequest()
-        request.method = 'POST'
-        request.POST['item_text'] = 'A new list item'
+class NewListViewTest(TestCase):
 
-        response = home_page(request)
-
-        self.assertEqual(Item.objects.count(), 1)
-        new_item = Item.objects.first()
-        self.assertEqual(new_item.text, 'A new list item')
-
-    def test_home_page_only_saves_items_when_necessary(self):
-        request = HttpRequest()
-        home_page(request)
-        self.assertEqual(Item.objects.count(), 0)
+    ## MY - each test should test a single item
+    ## rule of thumb - in general, one assertion
+    ## Tests should do:
+    ## i) save item to database
+    ## ii) after that, redirect
 
     def test_home_page_can_save_post_requests_to_database(self):
-        request = HttpRequest()
-        request.method = 'POST'
-        request.POST['item_text'] = 'A new item'
-        response = home_page(request)
+        self.client.post('/lists/new',{'item_text': 'A new item'})
         item_from_db = Item.objects.all()[0]
+        self.assertEqual(item_from_db.text, 'A new item')
+
+    def test_redirects_to_list_url(self):
+        response=self.client.post('/lists/new',{'item_text': 'A new item'})
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], '/lists/the-only-list-in-the-world/')
+        self.assertRedirects(response,'/lists/the-only-list-in-the-world/')
 
 
 class ListViewTest(TestCase):
