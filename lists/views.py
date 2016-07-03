@@ -3,12 +3,8 @@ from lists.models import Item
 
 def home_page(request):
     #print(">>>>>>>>>>> TESTS ONLY: in views.home_page")
-    if request.method == 'POST':
-        Item.objects.create(text=request.POST['item_text'])
-        return redirect('/lists/the-only-list-in-the-world/')
-    else:
-        items = Item.objects.all()
-        return render(request, 'home.html', {'items': items})
+    items = Item.objects.all()
+    return render(request, 'home.html', {'items': items})
 
 def new_list(request):
     #print(">>>>>>>>>>> TESTS ONLY: in views.new_list")
