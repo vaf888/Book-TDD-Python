@@ -4,6 +4,8 @@ from django.template.loader import render_to_string
 from django.test import TestCase
 
 from lists.models import Item
+from lists.models import List 
+
 from lists.views import home_page
 
 class HomePageTest(TestCase):
@@ -35,9 +37,10 @@ class NewListViewTest(TestCase):
 
 class ListViewTest(TestCase):
 
-    def test_lists_shows_items_in_database(self):
-        Item.objects.create(text='item 1')
-        Item.objects.create(text='item 2')
+    def test_lists_page_shows_items_in_database(self):
+        list_ = List.objects.create()
+        Item.objects.create(text='item 1', list=list_)
+        Item.objects.create(text='item 2', list=list_)
 
         ## MY -replacing code below, using django test
         ## internal functions
@@ -49,24 +52,34 @@ class ListViewTest(TestCase):
         ## MY - using assert from Django 
         self.assertContains(response,'item 2')
 
-
+    def test_uses_lists_template(self):
+        response = self.client.get('/lists/the-only-list-in-the-world/')
+        self.assertTemplateUsed(response,'list.html')
+        
 
 class ItemModelTest(TestCase):
 
     def test_saving_and_retrieving_items(self):
+        first_list = List()
+        first_list.save()
+
         first_item = Item()
-        first_item.text = 'The first (ever) list item'
+        first_item.text = 'Item the first'
+        first_item.list = first_list
         first_item.save()
 
+        ''' second item goes to the same list '''
         second_item = Item()
-        second_item.text = 'Item the second'
+        second_item.text = 'second item'
+        second_item.list = first_list
         second_item.save()
 
-        saved_items = Item.objects.all()
-        self.assertEqual(saved_items.count(), 2)
+        first_item_from_db=Item.objects.all()[0]
+        self.assertEqual(first_item_from_db.text, 'Item the first')
+        self.assertEqual(first_item_from_db.list, first_list)
 
-        first_saved_item = saved_items[0]
-        second_saved_item = saved_items[1]
-        self.assertEqual(first_saved_item.text, 'The first (ever) list item')
-        self.assertEqual(second_saved_item.text, 'Item the second')
+        second_item_from_db=Item.objects.all()[1]
+        self.assertEqual(second_item_from_db.text, 'second item')
+        self.assertEqual(second_item_from_db.list, first_list)
+
 
